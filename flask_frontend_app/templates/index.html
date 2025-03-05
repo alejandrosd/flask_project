@@ -1,0 +1,44 @@
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+{% for message in messages %}
+<p>{{ message }}</p>
+{% endfor %}
+{% endif %}
+{% endwith %}
+<form action="/client" method="POST">
+    <input type="text" name="doc_type" placeholder="Doc_type">
+    <input type="text" name="doc_num" placeholder="Doc_num">
+    
+    <button type="submit">
+        Buscar
+    </button>
+</form>
+<form action="/export_all" method="GET">
+    <button type="submit">
+        Exportar clientes para fidelizacion
+    </button>
+</form>
+<table>
+    <thead>
+        <tr>
+            <td>Numero de documento</td>
+            <td>Nombre</td>
+            <td>Apellido</td>
+            <td>Correo</td>
+            <td>Telefono</td>
+        </tr>
+    </thead>
+    <tbody>
+        {% for contact in contacts %}
+        <tr>
+          <td>{{contact.0}}</td>
+          <td>{{contact.1}}</td>
+          <td>{{contact.2}}</td>
+          <td>{{contact.3}}</td>
+          <td>{{contact.4}}</td>
+          <td>
+            <a href="/export/{{contact.0}}" class="btn btn-secondary">Exportar</a>
+          </td>
+        </tr>
+        {% endfor %}
+</table>
