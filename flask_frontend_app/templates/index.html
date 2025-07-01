@@ -42,3 +42,40 @@
         </tr>
         {% endfor %}
 </table>
+
+<body>
+    <h2>Subir archivo de texto</h2>
+    <input type="file" id="fileInput" accept=".txt">
+    <button onclick="leerYEnviar()">Enviar archivo</button>
+
+    <script>
+        function leerYEnviar() {
+            const input = document.getElementById('fileInput');
+            const archivo = input.files[0];
+
+            if (!archivo) {
+                alert('Seleccioná un archivo primero.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const contenido = e.target.result;
+
+                // Enviar al propio servidor frontend (Flask)
+                fetch('/subir_archivo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ contenido })
+                })
+                .then(res => res.json())
+                .then(data => alert('Backend respondió: ' + data.mensaje))
+                .catch(err => console.error('Error:', err));
+            };
+
+            reader.readAsText(archivo);
+        }
+    </script>
+</body>

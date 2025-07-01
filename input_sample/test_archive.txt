@@ -1,0 +1,2 @@
+estoes: 'una prueba' de los ms:dd;
+despues: viene_el, saltode linea;

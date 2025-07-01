@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 import requests
 from aspose import pycore
 from aspose.cells import Workbook, SaveFormat, FileFormatType
@@ -13,7 +13,7 @@ id_to_find = ''
 def Index():   
     return render_template('index.html')
 
-# Busqueda de cliente
+# Busqueda de cliente (deprecado)
 @app.route('/client', methods = ['POST'])
 def client():
     if request.method == 'POST':
@@ -94,6 +94,19 @@ def export_all():
     #worksheet.cells.get("B2").put_value("ValueB")
     workbook.save("reporte_fidelizacion.xls")
     return redirect(url_for('search'))
+
+BACKEND_URL = 'http://localhost:3000/api/procesar_archivo'
+@app.route('/subir_archivo', methods=['POST'])
+def enviar_al_backend():
+    data = request.get_json()
+    contenido = data.get('contenido')
+
+    try:
+        # Redirigir al backend real
+        respuesta = requests.post(BACKEND_URL, json={'contenido': contenido})
+        return jsonify(respuesta.json()), respuesta.status_code
+    except Exception as e:
+        return jsonify({'mensaje': 'Error al contactar el backend', 'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(port = 3001, debug = True)

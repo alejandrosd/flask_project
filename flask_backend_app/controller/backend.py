@@ -1,7 +1,8 @@
-from flask import Flask
+from flask import Flask, request, jsonify
 import sqlite3
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine
+from model.archive import Archive
 
 app = Flask(__name__)
 
@@ -44,6 +45,17 @@ def search_client(id):
     c.execute("SELECT * FROM client WHERE doc_num=?", (id,))
     result = c.fetchall()
     return result
+
+@app.route('/api/procesar_archivo', methods=['POST'])
+def procesar_archivo():
+    data = request.get_json()
+    contenido = data.get('contenido')
+    objeto = Archive
+    objeto.process_archive(contenido)
+    # Procesar la cadena
+    print("Contenido recibido en backend:", contenido[:100])
+
+    return jsonify({'mensaje': 'Archivo recibido y procesado exitosamente'})
 
 if __name__ == '__main__':
     app.run(port = 3000, debug = True)
