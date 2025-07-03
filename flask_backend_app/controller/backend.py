@@ -50,12 +50,12 @@ def search_client(id):
 def procesar_archivo():
     data = request.get_json()
     contenido = data.get('contenido')
-    objeto = Archive
-    objeto.process_archive(contenido)
+    archive = Archive
+    archive.process_archive(contenido)
     # Procesar la cadena
     print("Contenido recibido en backend:", contenido[:100])
 
-    return jsonify({'mensaje': 'Archivo recibido y procesado exitosamente'})
+    return jsonify({'mensaje': 'Archivo procesado'})
 
 if __name__ == '__main__':
     app.run(port = 3000, debug = True)
