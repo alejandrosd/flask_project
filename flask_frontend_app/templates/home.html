@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<h2>Configuración de prueba</h2>
+
+<form method="POST" action="/seleccion">
+    <label for="protocolo">Protocolo:</label>
+    <select name="protocolo" id="protocolo">
+        <option value="http">HTTP</option>
+        <option value="https">HTTPS</option>
+    </select>
+
+    <label for="metodo">Método HTTP:</label>
+    <select name="metodo" id="metodo">
+        <option value="get">GET</option>
+        <option value="post">POST</option>
+    </select>
+
+    <button type="submit">Continuar</button>
+</form>
+{% endblock %}

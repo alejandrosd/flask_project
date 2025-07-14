@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Microservicios{% endblock %}</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Roboto, sans-serif;
+            background-color: #f5f7fa;
+            color: #2c3e50;
+        }
+
+        nav {
+            background-color: #111;
+            padding: 14px 30px;
+            display: flex;
+            align-items: center;
+        }
+
+        nav a {
+            color: #f1f1f1;
+            text-decoration: none;
+            margin-right: 25px;
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        nav a:hover {
+            color: #1abc9c;
+        }
+
+        .container {
+            padding: 30px;
+            max-width: 900px;
+            margin: auto;
+        }
+
+        h2, h3 {
+            color: #1a73e8;
+        }
+
+        input, select, button {
+            font-family: inherit;
+            font-size: 16px;
+        }
+
+        label {
+            font-weight: 500;
+            display: block;
+            margin-top: 16px;
+        }
+
+        input[type="file"],
+        input[type="text"],
+        input[type="number"],
+        select {
+            padding: 8px 10px;
+            margin-top: 6px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #1a73e8;
+            border: none;
+            color: white;
+            font-weight: 600;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #155cc1;
+        }
+
+        .param-section {
+            background-color: #fff;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/">Inicio</a>
+        <a href="/subida">Subida de archivo</a>
+    </nav>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

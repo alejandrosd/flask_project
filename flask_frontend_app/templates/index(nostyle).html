@@ -1,0 +1,140 @@
+<body>
+    <h2>Subir archivo de texto</h2>
+    <input type="file" id="fileInput" accept=".txt">
+    <button onclick="leerYProcesarArchivo()">Leer archivo</button>
+
+    <div id="parametrosContainer" style="margin-top: 20px;"></div>
+    <button id="enviarBtn" style="display: none;" onclick="enviarFormulario()">Enviar al backend</button>
+
+    <script>
+        let contenidoArchivo = "";
+        let parametrosPorServicio = {};
+
+        function leerYProcesarArchivo() {
+            const input = document.getElementById('fileInput');
+            const archivo = input.files[0];
+
+            if (!archivo) {
+                alert('Seleccioná un archivo primero.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                contenidoArchivo = e.target.result;
+
+                // Buscar microservicios con parámetros
+                const matches = contenidoArchivo.match(/component\s+(\w+)\(([^)]*)\)/g);
+                parametrosPorServicio = {};
+
+                if (matches) {
+                    matches.forEach(match => {
+                        const parts = match.match(/component\s+(\w+)\(([^)]*)\)/);
+                        if (parts && parts.length === 3) {
+                            const nombre = parts[1];
+                            const params = parts[2].split(',').map(p => p.trim()).filter(p => p);
+                            parametrosPorServicio[nombre] = params;
+                        }
+                    });
+                }
+
+                generarFormulario();
+            };
+
+            reader.readAsText(archivo);
+        }
+
+        function generarFormulario() {
+            const contenedor = document.getElementById('parametrosContainer');
+            contenedor.innerHTML = '';
+
+            Object.entries(parametrosPorServicio).forEach(([servicio, parametros]) => {
+                const section = document.createElement('div');
+                section.innerHTML = `<h3>${servicio}</h3>`;
+
+                // Campos de parámetros
+                parametros.forEach(param => {
+                    const label = document.createElement('label');
+                    label.textContent = `${param}: `;
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.name = `${servicio}__param__${param}`;
+                    input.placeholder = `Ingrese valor para ${param}`;
+                    section.appendChild(label);
+                    section.appendChild(input);
+                    section.appendChild(document.createElement('br'));
+                });
+
+                // Campos de red
+                const hostLabel = document.createElement('label');
+                hostLabel.textContent = 'Host: ';
+                const hostInput = document.createElement('input');
+                hostInput.type = 'text';
+                hostInput.name = `${servicio}__host`;
+                hostInput.placeholder = 'localhost';
+
+                const portLabel = document.createElement('label');
+                portLabel.textContent = 'Puerto: ';
+                const portInput = document.createElement('input');
+                portInput.type = 'number';
+                portInput.name = `${servicio}__port`;
+                portInput.placeholder = '8000';
+
+                section.appendChild(hostLabel);
+                section.appendChild(hostInput);
+                section.appendChild(document.createElement('br'));
+                section.appendChild(portLabel);
+                section.appendChild(portInput);
+                section.appendChild(document.createElement('br'));
+
+                contenedor.appendChild(section);
+            });
+
+            document.getElementById('enviarBtn').style.display = 'inline-block';
+        }
+
+        function enviarFormulario() {
+            const inputs = document.querySelectorAll('#parametrosContainer input');
+            const parametros = {};
+            const configuracionRed = {};
+
+            inputs.forEach(input => {
+                const nameParts = input.name.split('__');
+                const servicio = nameParts[0];
+
+                if (nameParts[1] === 'param') {
+                    const param = nameParts[2];
+                    if (!parametros[servicio]) {
+                        parametros[servicio] = {};
+                    }
+                    parametros[servicio][param] = input.value;
+                } else if (nameParts[1] === 'host') {
+                    if (!configuracionRed[servicio]) {
+                        configuracionRed[servicio] = {};
+                    }
+                    configuracionRed[servicio]["host"] = input.value || "localhost";
+                } else if (nameParts[1] === 'port') {
+                    if (!configuracionRed[servicio]) {
+                        configuracionRed[servicio] = {};
+                    }
+                    configuracionRed[servicio]["port"] = parseInt(input.value) || 8000;
+                }
+            });
+
+            fetch('/subir_archivo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    contenido: contenidoArchivo,
+                    parametros: parametros,
+                    red: configuracionRed
+                })
+            })
+            .then(res => res.json())
+            .then(data => alert('Backend respondió: ' + data.mensaje))
+            .catch(err => console.error('Error:', err));
+        }
+    </script>
+</body>

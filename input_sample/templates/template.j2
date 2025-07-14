@@ -1,0 +1,19 @@
+import requests
+
+{% for conn_name, conn in connectors.items() %}
+{% for from_, to in conn.attachments %}
+def test_{{ from_ }}_to_{{ to }}_integration():
+    URL = "{{ components[to].endpoint }}"
+    payload = {
+        {% for param in components[to].inputs %}
+        "{{ param.name }}": "{{ param.value }}"{% if not loop.last %},{% endif %}
+        {% endfor %}
+    }
+    response = requests.post(
+        URL,
+        json=payload
+    )
+    assert response.status_code == 200
+    assert response.json()
+{% endfor %}
+{% endfor %}

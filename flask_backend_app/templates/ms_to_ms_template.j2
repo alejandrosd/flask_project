@@ -1,0 +1,16 @@
+import requests
+
+{% for relation in relations %}
+def test_{{ relation.source }}_to_{{ relation.target }}_integration():
+    URL = "{{ components[relation.source].endpoint }}"
+    payload = {
+        {% for key, value in components[relation.target].params.items() %}
+        "{{ key }}": "{{ value }}"{% if not loop.last %},{% endif %}
+        {% endfor %}
+    }
+
+    response = requests.post(URL, json=payload)
+
+    assert response.status_code == 200
+    assert response.json()
+{% endfor %}

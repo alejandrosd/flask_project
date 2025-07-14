@@ -1,6 +1,6 @@
 from pyparsing import Word, ParseResults, alphanums, Suppress, Group, Optional, delimitedList, OneOrMore, Keyword, Literal, ParseException
 import json
-
+from jinja2 import Environment, FileSystemLoader
 
 class Archive:
     def __init__(self):
@@ -86,8 +86,37 @@ class Archive:
                 }
 
         return semantic_model
-
-    def process_archive(archive):
+    
+    def clean_semantic_model(model):
+        for comp in model["components"].values():
+            if isinstance(comp["inputs"], ParseResults):
+                comp["inputs"] = list(comp["inputs"])
+        return model
+    
+    def add_parameters(model, values):
+        for comp_name, comp in model["components"].items():
+            enriched_inputs = []
+            for param in comp["inputs"]:
+                enriched_inputs.append({
+                    "name": param,
+                    "value": values.get(param, "")
+                })
+            comp["inputs"] = enriched_inputs
+        return model
+    
+    def add_network_info(model, host_map, port_map):
+        for comp_name, comp in model["components"].items():
+            print("comp")
+            print(comp)
+            print("comp_name")
+            print(comp_name)
+            hostname = host_map.get(comp_name, "localhost")
+            port = port_map.get(comp_name, 8000)
+            comp["host"] = hostname
+            comp["port"] = port
+            comp["endpoint"] = f"http://{hostname}:{port}/{comp_name}"
+        return model
+    def process_archive(archive,parameters,net_config):
         #convertir el texto a diccionario
 
         #obtener las partes que se necesitan del diccionario
@@ -110,20 +139,41 @@ class Archive:
         #       token: is string not empty
         #       refreshToken: is string not empty
         
-        #semantic_model = Archive.parse_architecture_dsl(archive)
-        #semantic_model = Archive.clean_semantic_model(semantic_model)
+        semantic_model = Archive.parse_architecture_dsl(archive)
+        semantic_model = Archive.clean_semantic_model(semantic_model)
         
+        print("SEMANTIC MODEL",semantic_model["components"]["course_ms"])
+
+        # Valores extraídos posteriormente
+        param_values = {
+            "contenido": "Test Contenido"
+        }
+
+        semantic_model = Archive.add_parameters(semantic_model, param_values)
+
+        env = Environment(loader=FileSystemLoader("templates"))
+        template = env.get_template("ms_to_ms_template.j2")
+        output = template.render(components=semantic_model["components"], connectors=semantic_model["connectors"])
+
+        print("OUTPUT")
+        print(output)
+        file_name = "test_file.py"
+        test_file = open(file_name, "w")
+        test_file.write(output)
+        test_file.close()
+
+        import subprocess
+        resultado = subprocess.run(['pytest', file_name], capture_output=True, text=True, check=True)
+        print('Rsultado prueba: ')
+        print(resultado.stdout)
+
         print('PRUEBA DE CLASE DE PYTHON',archive)
-        print('')
+
         #print(semantic_model)
         print('end')
 
     # Clean up the semantic model to convert ParseResults to plain lists
-    def clean_semantic_model(model):
-        for comp in model["components"].values():
-            if isinstance(comp["inputs"], ParseResults):
-                comp["inputs"] = list(comp["inputs"])
-        return model
+    
 '''
 # Run the parser on example input
 dsl_text = """

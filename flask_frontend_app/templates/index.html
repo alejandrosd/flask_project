@@ -1,81 +1,137 @@
-{% with messages = get_flashed_messages() %}
-{% if messages %}
-{% for message in messages %}
-<p>{{ message }}</p>
-{% endfor %}
-{% endif %}
-{% endwith %}
-<form action="/client" method="POST">
-    <input type="text" name="doc_type" placeholder="Doc_type">
-    <input type="text" name="doc_num" placeholder="Doc_num">
-    
-    <button type="submit">
-        Buscar
-    </button>
-</form>
-<form action="/export_all" method="GET">
-    <button type="submit">
-        Exportar clientes para fidelizacion
-    </button>
-</form>
-<table>
-    <thead>
-        <tr>
-            <td>Numero de documento</td>
-            <td>Nombre</td>
-            <td>Apellido</td>
-            <td>Correo</td>
-            <td>Telefono</td>
-        </tr>
-    </thead>
-    <tbody>
-        {% for contact in contacts %}
-        <tr>
-          <td>{{contact.0}}</td>
-          <td>{{contact.1}}</td>
-          <td>{{contact.2}}</td>
-          <td>{{contact.3}}</td>
-          <td>{{contact.4}}</td>
-          <td>
-            <a href="/export/{{contact.0}}" class="btn btn-secondary">Exportar</a>
-          </td>
-        </tr>
-        {% endfor %}
-</table>
+{% extends "base.html" %}
 
-<body>
-    <h2>Subir archivo de texto</h2>
-    <input type="file" id="fileInput" accept=".txt">
-    <button onclick="leerYEnviar()">Enviar archivo</button>
+{% block title %}Subida de arquitectura ADL{% endblock %}
 
-    <script>
-        function leerYEnviar() {
-            const input = document.getElementById('fileInput');
-            const archivo = input.files[0];
+{% block content %}
+<h2>Subir archivo de arquitectura ADL</h2>
 
-            if (!archivo) {
-                alert('Seleccioná un archivo primero.');
-                return;
+<input type="file" id="fileInput" accept=".txt">
+<button onclick="leerYProcesarArchivo()">Leer archivo</button>
+
+<div id="parametrosContainer"></div>
+
+<button id="enviarBtn" class="hidden" onclick="enviarFormulario()">Enviar al backend</button>
+
+<script>
+    let contenidoArchivo = "";
+    let parametrosPorServicio = {};
+
+    function leerYProcesarArchivo() {
+        const input = document.getElementById('fileInput');
+        const archivo = input.files[0];
+
+        if (!archivo) {
+            alert('Seleccioná un archivo primero.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            contenidoArchivo = e.target.result;
+
+            const matches = contenidoArchivo.match(/component\s+(\w+)\(([^)]*)\)/g);
+            parametrosPorServicio = {};
+
+            if (matches) {
+                matches.forEach(match => {
+                    const parts = match.match(/component\s+(\w+)\(([^)]*)\)/);
+                    if (parts && parts.length === 3) {
+                        const nombre = parts[1];
+                        const params = parts[2].split(',').map(p => p.trim()).filter(p => p);
+                        parametrosPorServicio[nombre] = params;
+                    }
+                });
             }
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const contenido = e.target.result;
+            generarFormulario();
+        };
 
-                // Enviar al propio servidor frontend (Flask)
-                fetch('/subir_archivo', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ contenido })
-                })
-                .then(res => res.json())
-                .then(data => alert('Backend respondió: ' + data.mensaje))
-                .catch(err => console.error('Error:', err));
-            };
+        reader.readAsText(archivo);
+    }
 
-            reader.readAsText(archivo);
-        }
-    </script>
-</body>
+    function generarFormulario() {
+        const contenedor = document.getElementById('parametrosContainer');
+        contenedor.innerHTML = '';
+
+        Object.entries(parametrosPorServicio).forEach(([servicio, parametros]) => {
+            const section = document.createElement('div');
+            section.classList.add('param-section');
+            section.innerHTML = `<h3>${servicio}</h3>`;
+
+            // Parámetros
+            parametros.forEach(param => {
+                const label = document.createElement('label');
+                label.textContent = `${param}:`;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.name = `${servicio}__param__${param}`;
+                input.placeholder = `Ingrese valor para ${param}`;
+                section.appendChild(label);
+                section.appendChild(input);
+            });
+
+            // Configuración de red
+            const hostLabel = document.createElement('label');
+            hostLabel.textContent = 'Host:';
+            const hostInput = document.createElement('input');
+            hostInput.type = 'text';
+            hostInput.name = `${servicio}__host`;
+            hostInput.placeholder = 'localhost';
+
+            const portLabel = document.createElement('label');
+            portLabel.textContent = 'Puerto:';
+            const portInput = document.createElement('input');
+            portInput.type = 'number';
+            portInput.name = `${servicio}__port`;
+            portInput.placeholder = '8000';
+
+            section.appendChild(hostLabel);
+            section.appendChild(hostInput);
+            section.appendChild(portLabel);
+            section.appendChild(portInput);
+
+            contenedor.appendChild(section);
+        });
+
+        document.getElementById('enviarBtn').classList.remove('hidden');
+    }
+
+    function enviarFormulario() {
+        const inputs = document.querySelectorAll('#parametrosContainer input');
+        const parametros = {};
+        const configuracionRed = {};
+
+        inputs.forEach(input => {
+            const nameParts = input.name.split('__');
+            const servicio = nameParts[0];
+
+            if (nameParts[1] === 'param') {
+                const param = nameParts[2];
+                if (!parametros[servicio]) parametros[servicio] = {};
+                parametros[servicio][param] = input.value;
+            } else if (nameParts[1] === 'host') {
+                if (!configuracionRed[servicio]) configuracionRed[servicio] = {};
+                configuracionRed[servicio]["host"] = input.value || "localhost";
+            } else if (nameParts[1] === 'port') {
+                if (!configuracionRed[servicio]) configuracionRed[servicio] = {};
+                configuracionRed[servicio]["port"] = parseInt(input.value) || 8000;
+            }
+        });
+
+        fetch('/subir_archivo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                contenido: contenidoArchivo,
+                parametros: parametros,
+                red: configuracionRed
+            })
+        })
+        .then(res => res.json())
+        .then(data => alert('Backend respondió: ' + data.mensaje))
+        .catch(err => console.error('Error:', err));
+    }
+</script>
+{% endblock %}

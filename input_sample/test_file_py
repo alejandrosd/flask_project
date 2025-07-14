@@ -1,12 +1,14 @@
-architecture PythonArchitecture {
+architecture EvolvedArchitecture {
     component-and-connector-view::
         elements{
-            component frontend_ms();
-            component backend_ms(archivo);
+            component frontend_test_ms();
+            component backend_test_ms(parameter1,parameter2);
+            component other_test_ms(parameter3,parameter4);
             connector http HTTP;
         }
         relations{
-            attachment (HTTP:course_ms, professor_ms);
+            attachment (HTTP:frontend_test_ms, backend_test_ms);
+            attachment (HTTP:backend_test_ms, other_test_ms);
         }
 }
 
@@ -14,3 +16,89 @@ architecture PythonArchitecture {
 -- TSL 
 
 -> API -> SourceCode 
+
+{'architecture': 'EvolvedArchitecture',
+    'components': 
+        {
+            'course_ms': {'inputs': []}, 
+            'professor_ms': {'inputs': ['institution']}
+        }, 
+    'connectors': 
+        {
+            'http': 
+                {
+                    'type': 'HTTP', 
+                    'attachments': [['course_ms', 'professor_ms']]}
+        }
+}
+
+
+
+ {'architecture': 'EvolvedArchitecture', 
+    'components': 
+        {
+            'course_ms': {'inputs': []}, 
+            'professor_ms': {'inputs': ['institution', 'country']}
+        },
+    'connectors': 
+        {
+            'http': 
+                {
+                    'type': 'HTTP', 
+                    'attachments': [['course_ms', 'professor_ms']]
+                }
+        }
+}
+
+
+
+{'architecture': 'EvolvedArchitecture', 
+    'components': 
+        {
+            'course_ms': 
+            {
+                'inputs': []
+            }, 
+            'professor_ms': 
+            {
+                'inputs': 
+                [
+                    {'name': 'institution', 'value': 'Test University'}, 
+                    {'name': 'country', 'value': 'spain'}
+                ]
+            }
+        }, 
+    'connectors': 
+        {
+            'http': {'type': 'HTTP', 'attachments': [['frontend_test_ms', 'backend_test_ms']]}}}
+
+
+
+{
+    'components': 
+    {  'frontend_test_ms': 
+        {
+            'params': {}, 
+            'host': 'localhost', 
+            'port': 3001, 
+            'endpoint': 'http://localhost:3001/frontend_test_ms'
+        }, 
+        'backend_test_ms': 
+        {
+            'params': {'contenido': 'prueba1', 'prueba': 'prueba2'}, 
+            'host': 'localhost', 
+            'port': 3000, 
+            'endpoint': 'http://localhost:3000/backend_test_ms'
+        }, 
+        'other_test_ms': 
+        {
+            'params': {'test': 'prueba3', 'paramet': 'prueba4'}, 
+            'host': 'localhost', 
+            'port': 3000, 
+            'endpoint': 'http://localhost:3000/other_test_ms'
+        }
+    }, 
+    'relations': 
+    [   {'connector': 'HTTP', 'source': 'frontend_test_ms', 'target': 'backend_test_ms'}, 
+        {'connector': 'HTTP', 'source': 'backend_test_ms', 'target': 'other_test_ms'}]
+}

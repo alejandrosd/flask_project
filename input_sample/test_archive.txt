@@ -1,11 +1,13 @@
 architecture EvolvedArchitecture {
     component-and-connector-view::
         elements{
-            component course_ms();
-            component professor_ms(institution);
+            component frontend_test_ms();
+            component backend_test_ms(contenido, prueba);
+            component other_test_ms(test, paramet);
             connector http HTTP;
         }
         relations{
-            attachment (HTTP:course_ms, professor_ms);
+            attachment (HTTP:frontend_test_ms, backend_test_ms);
+            attachment (HTTP:backend_test_ms, other_test_ms);
         }
 }
